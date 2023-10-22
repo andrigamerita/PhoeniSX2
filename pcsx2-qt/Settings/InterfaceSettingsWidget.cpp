@@ -1,0 +1,98 @@
+/*  AetherSX2 - PS2 Emulator for Android and ARM PCs
+ *  Copyright (C) 2022 AetherSX2 Dev Team
+ *
+ *  AetherSX2 is provided under the terms of the Creative Commons
+ *  Attribution-NonCommercial-NoDerivatives International License
+ *  (BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/).
+ * 
+ *  Commercialization of this application and source code is forbidden.
+ */
+
+#include "PrecompiledHeader.h"
+
+#include "InterfaceSettingsWidget.h"
+#include "MainWindow.h"
+#include "SettingWidgetBinder.h"
+#include "SettingsDialog.h"
+
+static const char* THEME_NAMES[] = {QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Native [Light]"),
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Fusion [Light]"),
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Gray) [Dark]"),
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Blue) [Dark]"), nullptr};
+
+static const char* THEME_VALUES[] = {"", "fusion", "darkfusion", "darkfusionblue", nullptr};
+
+InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget* parent)
+	: QWidget(parent)
+{
+	SettingsInterface* sif = dialog->getSettingsInterface();
+
+	m_ui.setupUi(this);
+
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.inhibitScreensaver, "UI", "InhibitScreensaver", true);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.discordPresence, "UI", "DiscordPresence", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.confirmShutdown, "UI", "ConfirmShutdown", true);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.saveStateOnExit, "EmuCore", "AutoStateLoadSave", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.pauseOnStart, "UI", "StartPaused", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.pauseOnFocusLoss, "UI", "PauseOnFocusLoss", false);
+
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.startFullscreen, "UI", "StartFullscreen", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.doubleClickTogglesFullscreen, "UI", "DoubleClickTogglesFullscreen",
+		true);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.hideMouseCursor, "UI", "HideMouseCursor", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.renderToMainWindow, "UI", "RenderToMainWindow", true);
+
+	SettingWidgetBinder::BindWidgetToEnumSetting(sif, m_ui.theme, "UI", "Theme", THEME_NAMES, THEME_VALUES,
+		MainWindow::DEFAULT_THEME_NAME);
+	connect(m_ui.theme, QOverload<int>::of(&QComboBox::currentIndexChanged), [this]() { emit themeChanged(); });
+
+	dialog->registerWidgetHelp(
+		m_ui.inhibitScreensaver, tr("Inhibit Screensaver"), tr("Checked"),
+		tr("Prevents the screen saver from activating and the host from sleeping while emulation is running."));
+
+	dialog->registerWidgetHelp(m_ui.discordPresence, tr("Enable Discord Presence"), tr("Unchecked"),
+		tr("Shows the game you are currently playing as part of your profile in Discord."));
+	if (true)
+	{
+		SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.autoUpdateEnabled, "AutoUpdater", "CheckAtStartup", true);
+		dialog->registerWidgetHelp(m_ui.autoUpdateEnabled, tr("Enable Automatic Update Check"), tr("Checked"),
+			tr("Automatically checks for updates to the program on startup. Updates can be deferred "
+			   "until later or skipped entirely."));
+
+		// m_ui.autoUpdateTag->addItems(AutoUpdaterDialog::getTagList());
+		// SettingWidgetBinder::BindWidgetToStringSetting(m_ui.autoUpdateTag, "AutoUpdater", "UpdateTag",
+		// AutoUpdaterDialog::getDefaultTag());
+
+		// m_ui.autoUpdateCurrentVersion->setText(tr("%1 (%2)").arg(g_scm_tag_str).arg(g_scm_date_str));
+		// connect(m_ui.checkForUpdates, &QPushButton::clicked, [this]() {
+		// m_host_interface->getMainWindow()->checkForUpdates(true); });
+	}
+	else
+	{
+		m_ui.verticalLayout->removeWidget(m_ui.automaticUpdaterGroup);
+		m_ui.automaticUpdaterGroup->hide();
+	}
+
+	dialog->registerWidgetHelp(
+		m_ui.confirmShutdown, tr("Confirm Shutdown"), tr("Checked"),
+		tr("Determines whether a prompt will be displayed to confirm shutting down the virtual machine "
+		   "when the hotkey is pressed."));
+	dialog->registerWidgetHelp(m_ui.saveStateOnExit, tr("Save State On Exit"), tr("Checked"),
+		tr("Automatically saves the emulator state when powering down or exiting. You can then "
+		   "resume directly from where you left off next time."));
+	dialog->registerWidgetHelp(m_ui.pauseOnStart, tr("Pause On Start"), tr("Unchecked"),
+		tr("Pauses the emulator when a game is started."));
+	dialog->registerWidgetHelp(m_ui.pauseOnFocusLoss, tr("Pause On Focus Loss"), tr("Unchecked"),
+		tr("Pauses the emulator when you minimize the window or switch to another application, "
+		   "and unpauses when you switch back."));
+	dialog->registerWidgetHelp(m_ui.startFullscreen, tr("Start Fullscreen"), tr("Unchecked"),
+		tr("Automatically switches to fullscreen mode when a game is started."));
+	dialog->registerWidgetHelp(m_ui.hideMouseCursor, tr("Hide Cursor In Fullscreen"), tr("Checked"),
+		tr("Hides the mouse pointer/cursor when the emulator is in fullscreen mode."));
+	dialog->registerWidgetHelp(
+		m_ui.renderToMainWindow, tr("Render To Main Window"), tr("Checked"),
+		tr("Renders the display of the simulated console to the main window of the application, over "
+		   "the game list. If unchecked, the display will render in a separate window."));
+}
+
+InterfaceSettingsWidget::~InterfaceSettingsWidget() = default;

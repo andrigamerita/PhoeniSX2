@@ -1,0 +1,115 @@
+/*  AetherSX2 - PS2 Emulator for Android and ARM PCs
+ *  Copyright (C) 2022 AetherSX2 Dev Team
+ *
+ *  AetherSX2 is provided under the terms of the Creative Commons
+ *  Attribution-NonCommercial-NoDerivatives International License
+ *  (BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/).
+ * 
+ *  Commercialization of this application and source code is forbidden.
+ */
+
+#pragma once
+
+#include <array>
+#include <optional>
+#include <string>
+
+#include <QtGui/QResizeEvent>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QToolButton>
+#include <QtWidgets/QListWidget>
+
+class SettingsDialog;
+
+struct AvailableMcdInfo;
+
+class MemoryCardListWidget final : public QTreeWidget
+{
+	Q_OBJECT
+public:
+	explicit MemoryCardListWidget(QWidget* parent);
+	~MemoryCardListWidget() override;
+
+	void refresh(SettingsDialog* dialog);
+
+protected:
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseMoveEvent(QMouseEvent* event) override;
+
+private:
+	QPoint m_dragStartPos = {};
+};
+
+class MemoryCardSlotWidget final : public QListWidget
+{
+	Q_OBJECT
+public:
+	explicit MemoryCardSlotWidget(QWidget* parent);
+	~MemoryCardSlotWidget() override;
+
+Q_SIGNALS:
+	void cardDropped(const QString& newCard);
+
+public:
+	void setCard(const std::optional<std::string>& name);
+
+protected:
+	void dragEnterEvent(QDragEnterEvent* event) override;
+	void dragMoveEvent(QDragMoveEvent* event) override;
+	void dropEvent(QDropEvent* event) override;
+};
+
+// Must be included *after* the custom widgets.
+#include "ui_MemoryCardSettingsWidget.h"
+
+class MemoryCardSettingsWidget : public QWidget
+{
+	Q_OBJECT
+
+public:
+	enum : u32
+	{
+		MAX_SLOTS = 2
+	};
+
+	MemoryCardSettingsWidget(SettingsDialog* dialog, QWidget* parent);
+	~MemoryCardSettingsWidget();
+
+protected:
+	void resizeEvent(QResizeEvent* event);
+	bool eventFilter(QObject* watched, QEvent* event);
+
+private Q_SLOTS:
+	void listContextMenuRequested(const QPoint& pos);
+	void refresh();
+
+private:
+	struct SlotGroup
+	{
+		QWidget* root;
+		QCheckBox* enable;
+		QToolButton* eject;
+		MemoryCardSlotWidget* slot;
+	};
+
+	void createSlotWidgets(SlotGroup* port, u32 slot);
+	void autoSizeUI();
+
+	void tryInsertCard(u32 slot, const QString& newCard);
+	void ejectSlot(u32 slot);
+
+	void createCard();
+
+	QString getSelectedCard() const;
+	void updateCardActions();
+	void duplicateCard();
+	void deleteCard();
+	void renameCard();
+	void convertCard();
+
+	SettingsDialog* m_dialog;
+	Ui::MemoryCardSettingsWidget m_ui;
+
+	std::array<SlotGroup, MAX_SLOTS> m_slots;
+};
