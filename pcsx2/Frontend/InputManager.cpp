@@ -1006,7 +1006,6 @@ static void UpdateInputSourceState(SettingsInterface& si, InputSourceType type, 
 #ifdef _WIN32
 #include "Frontend/XInputSource.h"
 #endif
-
 #ifdef SDL_BUILD
 #include "Frontend/SDLInputSource.h"
 #endif
